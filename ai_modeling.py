@@ -153,6 +153,8 @@ class modeling():
             if self.early_stop.early_stop(validation_loss=self.eval_loss):
                 break
         self.test()
+        self.save_metrics(self.train_some_metrics, filename='train_metrics.json')
+        self.save_metrics(self.eval_some_metrics, filename='eval_metrics.json')
         self.plot_metrics_over_epochs(self.train_some_metrics, title='Train metrics over epochs')
         self.plot_metrics_over_epochs(self.eval_some_metrics, title='Eval metrics over epochs')
         """
@@ -356,4 +358,18 @@ class modeling():
     def save_model(self):
         path = "model.pth"
         torch.save(self.model, path)
+
+    def save_metrics_json(self, metrics, filename ='metrics.json'):
+        import json
+        import numpy as np
+        def convert_ndarray(obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()  # Convert ndarray to list
+            raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
+
+        with open(filename, 'w') as file:
+            json.dump(metrics, file, indent=4, default=convert_ndarray)
+        print(f"Metrics saved to {filename}")
+
+
 

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     dm = DenseModel(in_features=20, hidden_features=50, out_features=2)
     tm = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=12, num_heads=8, dropout=0.1)
 
-    model = tm
+    model = dm
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
     loss_fn = nn.CrossEntropyLoss()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -32,9 +32,9 @@ if __name__ == '__main__':
 
     cur_model = modeling(model=model,
                          train_dataloader=train_dataloader, eval_dataloader=eval_dataloader, test_dataloader=test_dataloader,
-                         epochs=2, loss_fn=loss_fn, early_stop=early_stop, optimizer=optimizer, scheduler=scheduler, n_classes=2, device=device)
-    cur_model.run()
-    cur_model.save_model()
+                         epochs=6, loss_fn=loss_fn, early_stop=early_stop, optimizer=optimizer, scheduler=scheduler, n_classes=2, device=device)
+    cur_model.run_and_save_best_and_last_model()
+
 
 
     print('SpikeSense finished')

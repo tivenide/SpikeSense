@@ -167,6 +167,40 @@ class modeling():
             self.plot_confusion_matrix(confusion_matrix, ['Class 0', 'Class 1'])
         """
 
+    def run_and_save_best_and_last_model(self):
+        best_f1 = 0.0
+        best_epoch = 0
+
+        for self.epoch in range(self.epochs):
+            print(f"Epoch {self.epoch + 1} of {self.model.__class__.__name__}\n-------------------------------")
+            self.train()
+            self.eval()
+            if self.early_stop.early_stop(validation_loss=self.eval_loss):
+                break
+
+            #torch.save(self.model.state_dict(), "epo_"+str(self.epoch + 1)+"_"+str(self.model.__class__.__name__)+".pth")
+
+            # Calculate F1-score from evaluation metrics
+            f1 = self.eval_some_metrics[-1]['f1']
+            # Check if current epoch has the best F1-score so far
+            if f1 > best_f1:
+                best_f1 = f1
+                best_epoch = self.epoch
+                torch.save(self.model.state_dict(), "best_"+str(self.model.__class__.__name__)+".pth")
+
+        torch.save(self.model.state_dict(), "last_"+str(self.model.__class__.__name__)+".pth")
+        #self.test()
+
+        print(f"Loading and testing best model\n-------------------------------")
+        print(f"Best epoch: {best_epoch + 1}")
+        print(f"F1-score: {best_f1}")
+        best_metrics = self.eval_some_metrics[best_epoch]
+        print(f"Precision: {best_metrics['precision']}")
+        print(f"Recall: {best_metrics['recall']}")
+        self.model.load_state_dict(torch.load("best_"+str(self.model.__class__.__name__)+".pth"))
+        self.test()
+
+
     def train(self):
         n_total_steps = len(self.train_dataloader)
         train_target = []
@@ -221,6 +255,7 @@ class modeling():
         print(f"Calculating evaluation metrics")
         eval_metrics = self.calculate_metrics(target=eval_target.detach().cpu().numpy(), prediction=eval_pred.argmax(1).detach().cpu().numpy(), probabilities=eval_pred.detach().cpu().numpy())
         self.eval_some_metrics.append(eval_metrics)
+
     def test(self):
         test_target = []
         test_pred = []

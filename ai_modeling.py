@@ -118,7 +118,7 @@ import torch
 
 class modeling():
     def __init__(self, model, train_dataloader, eval_dataloader, test_dataloader,
-                 loss_fn, early_stop, optimizer, scheduler, n_classes,
+                 epochs, loss_fn, early_stop, optimizer, scheduler, n_classes,
                  device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')):
         self.model = model.to(device)
 
@@ -134,7 +134,7 @@ class modeling():
         self.scheduler = scheduler
 
         self.epoch = 0
-        self.epochs = 25
+        self.epochs = epochs
 
         self.train_loss = 0
         self.eval_loss = 0

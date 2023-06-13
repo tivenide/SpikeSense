@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     cur_model = modeling(model=model,
                          train_dataloader=train_dataloader, eval_dataloader=eval_dataloader, test_dataloader=test_dataloader,
-                         loss_fn=loss_fn, early_stop=early_stop, optimizer=optimizer, scheduler=scheduler, n_classes=2, device=device)
+                         epochs=2, loss_fn=loss_fn, early_stop=early_stop, optimizer=optimizer, scheduler=scheduler, n_classes=2, device=device)
     cur_model.run()
     cur_model.save_model()
 

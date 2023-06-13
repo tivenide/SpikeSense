@@ -138,6 +138,8 @@ class modeling():
 
         self.train_loss = 0
         self.eval_loss = 0
+        self.train_loss_total = []
+        self.eval_loss_total = []
 
         self.n_classes = n_classes
 
@@ -222,7 +224,7 @@ class modeling():
 
             train_target.append(target)
             train_pred.append(prediction)
-
+            self.train_loss_total.append(self.train_loss.item())
             verbose_step = int(n_total_steps/5)
             if (batch + 1) % verbose_step == 0:
                 print(f"Epoch [{self.epoch + 1}/{ self.epochs}], Step [{batch + 1}/{n_total_steps}], Loss: {self.train_loss.item():.4f}, Learning Rate {self.optimizer.param_groups[0]['lr']}")
@@ -249,6 +251,7 @@ class modeling():
                 self.eval_loss = self.loss_fn(prediction, target)
                 eval_target.append(target)
                 eval_pred.append(prediction)
+                self.eval_loss_total.append(self.eval_loss.item())
             self.scheduler.step(self.eval_loss)
             eval_target = torch.cat(eval_target, dim=0)
             eval_pred = torch.cat(eval_pred, dim=0)
@@ -389,6 +392,20 @@ class modeling():
         plt.legend()
         plt.grid(True)
         plt.show()
+
+    def plot_losses(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+        train_epochs = range(1, len(self.train_loss_total) + 1)
+        eval_epochs = np.linspace(1, len(self.train_loss_total), len(self.eval_loss_total))
+        plt.plot(self.train_loss_total, 'b', label='Training Loss')
+        plt.plot(self.eval_loss_total, 'r', label='Evaluation Loss')
+        plt.title('Training and Evaluation Loss')
+        plt.xlabel('Epochs (All Batches seen)')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
 
     def save_model(self):
         path = "model.pth"

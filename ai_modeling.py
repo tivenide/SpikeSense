@@ -242,8 +242,15 @@ class modeling():
         from sklearn.metrics import confusion_matrix
         from sklearn.metrics import classification_report
         from sklearn.metrics import precision_recall_curve, roc_curve, auc
+        import numpy as np
 
         metrics = {}
+
+        # Check for NaN values
+        # if prediction equals NaN then prediction.argmax(1) resulting in 0 for instance
+        if np.isnan(prediction).any() and np.isnan(probabilities).any():
+            print("Error: Input data contains NaN values.")
+            return metrics
 
         self.cm = confusion_matrix(y_true=target, y_pred=prediction)
         metrics['confusion_matrix'] = self.cm
@@ -263,16 +270,17 @@ class modeling():
         metrics['f1'] = f1_score
         print(f"Precision: {(precision):>0.2f} \tRecall: {(recall):>0.2f} \tF1: {(f1_score):>0.2f}")
 
-        # Calculate PR curve
-        precision, recall, _ = precision_recall_curve(target, probabilities[:,1])
-        metrics['pr_curve'] = {'precision': precision, 'recall': recall}
-        #print(f"Precision: {precision} \tRecall: {recall}")
+        if not np.isnan(probabilities).any():
+            # Calculate PR curve
+            precision, recall, _ = precision_recall_curve(target, probabilities[:,1])
+            metrics['pr_curve'] = {'precision': precision, 'recall': recall}
+            #print(f"Precision: {precision} \tRecall: {recall}")
 
-        # Calculate ROC curve
-        fpr, tpr, _ = roc_curve(target, probabilities[:,1])
-        metrics['roc_curve'] = {'fpr': fpr, 'tpr': tpr, 'auc': auc(fpr, tpr)}
-        #print(f"FPR: {fpr} \tTPR: {tpr}")
-        print(f"AUC: {(auc(fpr, tpr)):>0.2f}")
+            # Calculate ROC curve
+            fpr, tpr, _ = roc_curve(target, probabilities[:,1])
+            metrics['roc_curve'] = {'fpr': fpr, 'tpr': tpr, 'auc': auc(fpr, tpr)}
+            #print(f"FPR: {fpr} \tTPR: {tpr}")
+            print(f"AUC: {(auc(fpr, tpr)):>0.2f}")
 
         return metrics
 

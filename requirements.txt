@@ -3,6 +3,9 @@ numpy==1.24.3
 pandas==2.0.2
 
 scikit_learn==1.2.2
+imbalanced_learn==0.10.1
+
+h5py==3.7.0
 
 # plotting
 matplotlib==3.5.2

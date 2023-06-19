@@ -65,6 +65,20 @@ def create_dataloader_simple(data, labels, batch_size=32):
     windowed_frame_dataloader = DataLoader(windowed_frame_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     return windowed_frame_dataloader
 
+def load_datasets_from_h5(file_path):
+    import h5py
+    with h5py.File(file_path, 'r') as file:
+        datasets_group = file['datasets']
+        x_train = datasets_group['x_train'][()]
+        y_train = datasets_group['y_train'][()]
+        x_test = datasets_group['x_test'][()]
+        y_test = datasets_group['y_test'][()]
+        x_val = datasets_group['x_val'][()]
+        y_val = datasets_group['y_val'][()]
+    return x_train, y_train, x_test, y_test, x_val, y_val
+
+
+
 import numpy as np
 
 class EarlyStopper:
@@ -98,7 +112,7 @@ class EarlyStopper:
         self.counter = 0
         self.min_loss = np.inf
 
-    def early_stop(self, validation_loss, verbose=False):
+    def early_stop(self, validation_loss, verbose=True):
         if validation_loss < self.min_loss - self.min_delta:
             self.counter = 0
             self.min_loss = validation_loss
@@ -169,7 +183,8 @@ class modeling():
             self.plot_confusion_matrix(confusion_matrix, ['Class 0', 'Class 1'])
         """
 
-    def run_and_save_best_and_last_model(self):
+    def run_and_save_best_and_last_model(self, path, datafile):
+        import os
         best_f1 = 0.0
         best_epoch = 0
 
@@ -188,10 +203,15 @@ class modeling():
             if f1 > best_f1:
                 best_f1 = f1
                 best_epoch = self.epoch
-                torch.save(self.model.state_dict(), "best_"+str(self.model.__class__.__name__)+".pth")
+                torch.save(self.model.state_dict(), os.path.join(path, "best_"+str(self.model.__class__.__name__)+".pth"))
 
-        torch.save(self.model.state_dict(), "last_"+str(self.model.__class__.__name__)+".pth")
+        torch.save(self.model.state_dict(), os.path.join(path, "last_"+str(self.model.__class__.__name__)+".pth"))
         #self.test()
+
+        self.save_model_meta_to_h5(file_path= os.path.join(path, datafile))
+        self.save_loss_to_h5(file_path=os.path.join(path, datafile))
+        self.save_metrics_to_h5(file_path=os.path.join(path, datafile), mode='train')
+        self.save_metrics_to_h5(file_path=os.path.join(path, datafile), mode='eval')
 
         print(f"Loading and testing best model\n-------------------------------")
         print(f"Best epoch: {best_epoch + 1}")
@@ -199,8 +219,10 @@ class modeling():
         best_metrics = self.eval_some_metrics[best_epoch]
         print(f"Precision: {best_metrics['precision']}")
         print(f"Recall: {best_metrics['recall']}")
-        self.model.load_state_dict(torch.load("best_"+str(self.model.__class__.__name__)+".pth"))
+        self.model.load_state_dict(torch.load(os.path.join(path, "best_"+str(self.model.__class__.__name__)+".pth")))
         self.test()
+
+        self.save_metrics_test_to_h5(file_path=os.path.join(path, datafile))
 
 
     def train(self):
@@ -424,4 +446,87 @@ class modeling():
         print(f"Metrics saved to {filename}")
 
 
+    def save_metrics_to_h5(self, file_path, mode):
+        import h5py
+        import numpy as np
 
+        if mode == 'train':
+            metrics = self.train_some_metrics
+            group_name = 'metrics_train'
+        elif mode == 'eval':
+            metrics = self.eval_some_metrics
+            group_name = 'metrics_evaluation'
+        else:
+            raise ValueError(f"Mode {mode} not supported. Please choose 'train' or 'eval'")
+
+        with h5py.File(file_path, 'a') as file:
+            metrics_group = file.create_group(group_name)
+            for epoch, metric_dict in enumerate(metrics):
+                epoch_group = metrics_group.create_group(f'epoch_{epoch}')
+                for key, value in metric_dict.items():
+                    if isinstance(value, np.ndarray):
+                        epoch_group.create_dataset(key, data=value)
+                    elif isinstance(value, (int, float)):
+                        epoch_group.attrs[key] = value
+                    elif isinstance(value, dict):
+                        sub_group = epoch_group.create_group(key)
+                        for sub_key, sub_value in value.items():
+                            sub_group.create_dataset(sub_key, data=sub_value)
+                    else:
+                        raise ValueError(f"Unsupported data type for metric: {type(value)}")
+
+    def save_metrics_test_to_h5(self, file_path):
+        import h5py
+        import numpy as np
+        with h5py.File(file_path, 'a') as file:
+            metric_group = file.create_group('metrics_test')
+            for key, value in self.test_some_metrics.items():
+                if isinstance(value, np.ndarray):
+                    metric_group.create_dataset(key, data=value)
+                elif isinstance(value, (int, float)):
+                    metric_group.attrs[key] = value
+                elif isinstance(value, dict):
+                    sub_group = metric_group.create_group(key)
+                    for sub_key, sub_value in value.items():
+                        sub_group.create_dataset(sub_key, data=sub_value)
+                else:
+                    raise ValueError(f"Unsupported data type for metric: {type(value)}")
+    def save_loss_to_h5(self, file_path):
+        import h5py
+        import numpy as np
+        with h5py.File(file_path, 'a') as file:
+            loss_group = file.create_group('loss')
+            training_loss_stack = np.stack(self.train_loss_total)
+            evaluation_loss_stack = np.stack(self.eval_loss_total)
+            loss_group.create_dataset('training_loss', data=training_loss_stack)
+            loss_group.create_dataset('evaluation_loss', data=evaluation_loss_stack)
+
+    def save_model_meta_to_h5(self, file_path):
+        import h5py
+        with h5py.File(file_path, 'a') as file:
+            model_meta_group = file.create_group('model_meta')
+            if hasattr(self.model, 'get_model_metadata') and callable(self.model.get_model_metadata):
+                model_metadata = self.model.get_model_metadata()
+                for key, value in model_metadata.items():
+                    model_meta_group.attrs[key] = value
+            else:
+                model_meta_group.attrs['error'] = 'Model metadata is not available'
+
+    def save_trainer_meta_to_h5(self, file_path, trainer_meta_dict=None):
+        import h5py
+        with h5py.File(file_path, 'a') as file:
+            trainer_meta_group = file.create_group('trainer_meta')
+            if trainer_meta_dict is not None:
+                for key, value in trainer_meta_dict.items():
+                    trainer_meta_group.attrs[key] = value
+            else:
+                trainer_meta_group.attrs['error'] = 'Trainer metadata is not available'
+
+    def save_model_to_h5(self, file_path):
+        #TODO: function does not properly work
+        import h5py
+        with h5py.File(file_path, 'a') as file:
+            model_group = file.create_group('model')
+            model_group.attrs['model_summary'] = str(self.model.summary())
+            # Save the model weights, configuration, etc.
+            self.model.save(file.create_group('model_data'))

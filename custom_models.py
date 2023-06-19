@@ -27,6 +27,15 @@ class DenseModel(nn.Module):
         fc3_out = self.selu(self.fc3(fc2_out))
         return self.softmax(fc3_out)
 
+    def get_model_metadata(self):
+        return {
+            'model_type': 'DenseModel',
+            'in_features': self.in_features,
+            'hidden_features': self.hidden_features,
+            'out_features': self.out_features
+        }
+
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 200): # max_len equals maximum window size
         super(PositionalEncoding, self).__init__()
@@ -81,3 +90,14 @@ class TransformerModel(nn.Module):
         #output = self.sigmoid(output)
         #pred = (output >= 0.9).float()
         return output
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'TransformerModel',
+            'input_dim': self.input_dim,
+            'hidden_size': self.hidden_size,
+            'num_classes': self.num_classes,
+            'num_layers': self.num_layers,
+            'num_heads': self.num_heads,
+            'dropout': self.dropout
+        }

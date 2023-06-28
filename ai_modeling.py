@@ -530,3 +530,84 @@ class modeling():
             model_group.attrs['model_summary'] = str(self.model.summary())
             # Save the model weights, configuration, etc.
             self.model.save(file.create_group('model_data'))
+
+import torch
+
+class using():
+    def __init__(self, model, device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')):
+        self.model = model # TODO: check .to(device)
+        self.device = device
+
+    def devide_2_vectors_into_equal_windows_with_step(self, x1, x2, window_size, step_size=None):
+            """
+            Devides vectors x1, x2 into windows with one window_size. step_size is used to generate more windows with overlap.
+            :param x1: Input list to be devided.
+            :param x2: Input list to be devided.
+            :param window_size: Size of each window.
+            :param step_size: If the step_size is not provided, it defaults to the window_size.
+                If the step_size is set to True, it is set to half of the window_size.
+                If the step_size is set to any other value, it is used directly as the step_size.
+            :return: Returns for every input a list of lists. Each included list represents a window.
+            """
+            if step_size is None:
+                step_size = window_size
+            elif step_size is True:
+                step_size = window_size // 2
+            elif step_size is not None:
+                step_size = int(step_size)
+            x1_windows = []
+            x2_windows = []
+            for i in range(0, len(x1) - window_size + 1, step_size):
+                x1_windows.append(x1[i:i + window_size])
+                x2_windows.append(x2[i:i + window_size])
+            return x1_windows, x2_windows
+
+    def is_spike_in_window(self, window):
+        # old version (pytorch unrecommented, here not working)
+        #loaded_model = torch.load(self.model, map_location=torch.device(self.device))
+        # new version with state_dict:
+        from custom_models import TransformerModel
+        loaded_model = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=12, num_heads=8, dropout=0.1)
+        loaded_model.load_state_dict(torch.load(self.model))
+        loaded_model.eval()
+        window_tensor = torch.tensor(window, dtype=torch.float32)
+
+        with torch.no_grad():
+            output = loaded_model(window_tensor.unsqueeze(0))
+
+        predicted_class = torch.argmax(output).item()
+
+        # return True if the predicted class is 1 (spike), False otherwise
+        return predicted_class == 1
+
+    def detect_spikes_and_get_timepoints(self, windowed_data, timestamps):
+        spikes = []
+        for window_index in range(len(windowed_data)):
+            window = windowed_data[window_index]
+            window_timestamps = timestamps[window_index]
+
+            timepoint_of_interest = window_timestamps[9] if len(window_timestamps) >= 10 else None
+
+            is_spike = self.is_spike_in_window(window)
+
+            if is_spike:
+                spikes.append(timepoint_of_interest)
+
+        return spikes
+
+    def application_of_model(self, signal_raw, timestamps):
+        import numpy as np
+        spiketrains = []
+        for electrode_index in range(signal_raw.shape[1]):
+            print(f"current electrode index: {electrode_index}")
+            electrode_data = signal_raw[:, electrode_index]
+            electrode_data_windowed, timestamps_windowed = self.devide_2_vectors_into_equal_windows_with_step(electrode_data, timestamps, window_size=20, step_size=None)
+            spiketrains.append(self.detect_spikes_and_get_timepoints(electrode_data_windowed, timestamps_windowed))
+        return np.array(spiketrains, dtype=object)
+
+    def save_results_to_h5(self, file_path):
+        import h5py
+        with h5py.File(file_path, 'a') as file:
+            spiketrains_group = file.create_group('spiketrains')
+
+

@@ -586,7 +586,10 @@ class using():
             window = windowed_data[window_index]
             window_timestamps = timestamps[window_index]
 
-            timepoint_of_interest = window_timestamps[9] if len(window_timestamps) >= 10 else None
+            timepoint_of_interest_idx = abs(window).argmax()
+            timepoint_of_interest = window_timestamps[timepoint_of_interest_idx]
+            # old method:
+            #timepoint_of_interest = window_timestamps[9] if len(window_timestamps) >= 10 else None
 
             is_spike = self.is_spike_in_window(window)
 

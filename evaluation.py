@@ -155,10 +155,13 @@ def calculate_metrics_for_mea_chip(gt_spiketrains, det_spiketrains, threshold=0.
     fps = []
     fns = []
     tns = []
+    gts = []
+    dets = []
     for i in range(gt_spiketrains.shape[0]):
         gt_spiketrain = gt_spiketrains[i]
         det_spiketrain = det_spiketrains[i]
-
+        gts.append(gt_spiketrain.size)
+        dets.append(det_spiketrain.size)
         if gt_spiketrain.size == 0 and det_spiketrain.size >=0:
             fp = det_spiketrain.size
             fps.append(fp)
@@ -191,8 +194,11 @@ def calculate_metrics_for_mea_chip(gt_spiketrains, det_spiketrains, threshold=0.
     total_tps = np.sum(np.array(tps))
     total_fps = np.sum(np.array(fps))
     total_fns = np.sum(np.array(fns))
+    total_gt = np.sum(np.array(gts))
+    total_det = np.sum(np.array(dets))
     print('totals:')
     print(f'tp: {total_tps}\tfp: {total_fps}\tfn:{total_fns}')
+    print(f'gt: {total_gt}\tdet: {total_det}')
     return total_tps, total_fps, total_fns
 
 

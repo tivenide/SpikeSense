@@ -535,7 +535,7 @@ import torch
 
 class using():
     def __init__(self, loaded_model, device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')):
-        self.loaded_model = loaded_model # TODO: check .to(device)
+        self.loaded_model = loaded_model.to(device)
         self.device = device
 
     def devide_2_vectors_into_equal_windows_with_step(self, x1, x2, window_size, step_size=None):
@@ -569,10 +569,10 @@ class using():
         # this has to be done outside the using class. The loaded model has to be given to using class.
         #from custom_models import TransformerModel
         #loaded_model = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=12, num_heads=8, dropout=0.1)
-        #loaded_model.load_state_dict(torch.load(path_to_model.pth))
+        #loaded_model.load_state_dict(torch.load('path_to_model.pth'))
         self.loaded_model.eval()
         window_tensor = torch.tensor(window, dtype=torch.float32)
-
+        window_tensor = window_tensor.to(self.device)
         with torch.no_grad():
             output = self.loaded_model(window_tensor.unsqueeze(0))
 

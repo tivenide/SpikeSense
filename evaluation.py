@@ -138,7 +138,7 @@ def calculate_metrics_for_different_gt_temporal_assignment_thresholds(pos_gt, po
 
     return tps, fps, fns, thresholds
 
-def calculate_metrics_for_mea_chip(gt_spiketrains, det_spiketrains, threshold=0.002, verbose=False):
+def calculate_metrics_for_mea_recording(gt_spiketrains, det_spiketrains, threshold=0.002, verbose=False):
     """
     Calculates TruePositive (TP), FalsePositive (FP) and FalseNegative (FN) for mea-recording
     :param gt_spiketrains: ground truth spiketrains (positive class)
@@ -222,7 +222,7 @@ def calculate_metrics_for_different_gt_location_assignment_thresholds(path_to_h5
     for gt_location_assignment_threshold in thresholds:
         gt_spiketrains = get_ground_truth_spiketrains_in_standard_array_format(path_to_h5_gt_spiketrains, threshold=gt_location_assignment_threshold)
         det_spiketrains = read_spiketrains_from_hdf5(path_to_h5_det_spiketrains)
-        total_tps, total_fps, total_fns = calculate_metrics_for_mea_chip(gt_spiketrains=gt_spiketrains, det_spiketrains=det_spiketrains, threshold=threshold)
+        total_tps, total_fps, total_fns = calculate_metrics_for_mea_recording(gt_spiketrains=gt_spiketrains, det_spiketrains=det_spiketrains, threshold=threshold)
         tps.append(total_tps)
         fps.append(total_fps)
         fns.append(total_fns)
@@ -239,4 +239,25 @@ def calculate_metrics_for_different_gt_location_assignment_thresholds(path_to_h5
     plt.show()
 
     return tps, fps, fns, thresholds
+
+def calculate_estimated_snr_for_mea_recording(signal_raw):
+    import numpy as np
+    peaks = []
+    #stds = []
+    #mad_quirogas = []
+
+    for i in range(signal_raw.shape[1]):
+        electrode_data = signal_raw[:,i]
+        peak = np.max(abs(electrode_data))
+        #std = np.std(electrode_data)
+        #mad_quiroga = np.median(abs(electrode_data)/0.6745)
+        peaks.append(peak)
+        #stds.append(std)
+        #mad_quirogas.append(mad_quiroga)
+
+    mad_quiroga_total = np.median(abs(signal_raw)/0.6745)
+
+    snr = np.mean(peaks) / mad_quiroga_total
+    print(f'estimated snr: {(snr):>0.2f}')
+    return snr
 

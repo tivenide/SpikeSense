@@ -338,11 +338,18 @@ class modeling():
             metrics['pr_curve'] = {'precision': precision, 'recall': recall}
             #print(f"Precision: {precision} \tRecall: {recall}")
 
-            # Calculate ROC curve
-            fpr, tpr, _ = roc_curve(target, probabilities[:,1])
-            metrics['roc_curve'] = {'fpr': fpr, 'tpr': tpr, 'auc': auc(fpr, tpr)}
+            # Calculate ROC curves
+            # class/neuron 1: spike
+            fpr_1, tpr_1, thr_1 = roc_curve(target, probabilities[:,1])
+            metrics['roc_curve_1'] = {'fpr': fpr_1, 'tpr': tpr_1, 'thr': thr_1, 'auc': auc(fpr_1, tpr_1)}
             #print(f"FPR: {fpr} \tTPR: {tpr}")
-            print(f"AUC: {(auc(fpr, tpr)):>0.2f}")
+            print(f"class 1: AUC: {(auc(fpr_1, tpr_1)):>0.2f}")
+
+            # class/neuron 0: noise
+            fpr_0, tpr_0, thr_0 = roc_curve(target, probabilities[:,0])
+            metrics['roc_curve_0'] = {'fpr': fpr_0, 'tpr': tpr_0, 'auc': auc(fpr_0, tpr_0)}
+            #print(f"FPR: {fpr} \tTPR: {tpr}")
+            print(f"class 0: AUC: {(auc(fpr_0, tpr_0)):>0.2f}")
 
         return metrics
 

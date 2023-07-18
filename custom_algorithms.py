@@ -124,7 +124,7 @@ def application_of_threshold_algorithm_quiroga(signal_raw, timestamps, factor_po
     print(f'Total detected spikes:\t{total_sum}')
     return np.array(spiketrains, dtype=object)
 
-def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, color_spike='red'):
+def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, color_spike='red', spiketrain_gt=None, color_spike_gt='green'):
     """
     Plots timepoints of interest on top of a total timeseries.
     
@@ -137,15 +137,21 @@ def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, co
     # Plot the total timeseries
     plt.plot(timestamps, electrode_data)
     
-    # plot thresholds
+    # Plot thresholds
     #plt.plot(timestamps, np.linspace(th_neg, th_neg, len(timestamps)), color='gray')
     #plt.plot(timestamps, np.linspace(th_pos, th_pos, len(timestamps)), color='gray')
 
-    # Plot the timepoints of interest on top of the total timeseries
+    # Plot the spiketrain
     for timepoint in spiketrain:
         value = electrode_data[timestamps == timepoint]
         plt.scatter(timepoint, value, c=color_spike)
-    
+
+    # Plot the spiketrain (ground truth)
+    if spiketrain_gt is not None:
+        for timepoint_gt in spiketrain_gt:
+            value_gt = electrode_data[timestamps == timepoint_gt]
+            plt.scatter(timepoint_gt, value_gt, c=color_spike_gt, marker='^')
+
     plt.xlabel('Time [sec]')
     plt.ylabel('Amplitude [µV]')
     plt.show()

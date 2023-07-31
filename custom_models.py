@@ -80,15 +80,16 @@ class TransformerModel(nn.Module):
         batch_size, seq_len = src.shape[0], src.shape[1]
         src = src.view(batch_size, seq_len, self.input_dim)
         src = src.transpose(0, 1).contiguous()
-        src = self.embedding(src)
+        src = self.selu(self.embedding(src)) # selu1: self.selu(self.embedding(src))
         src = self.pos_encoder(src)
         output = self.transformer_encoder(src)
         output = output.mean(dim=0)
         #output = self.dense(output)
-        output = self.fc(output)
+        output = self.fc(output) # selu2: self.selu(self.fc(output))
+        #output = output * 0.2
         output = self.softmax(output)
         #output = self.sigmoid(output)
-        #pred = (output >= 0.9).float()
+        #pred = torch.Tensor((output >= 0.8).float())
         return output
 
     def get_model_metadata(self):
@@ -100,4 +101,48 @@ class TransformerModel(nn.Module):
             'num_layers': self.num_layers,
             'num_heads': self.num_heads,
             'dropout': self.dropout
+        }
+
+
+class DenseModel_based_on_FNN_SpikeDeeptector(nn.Module):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True,
+                 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'), dtype=None) -> None:
+        super(DenseModel_based_on_FNN_SpikeDeeptector, self).__init__()
+
+        self.in_features = in_features
+        self.out_features = out_features
+        self.bias = bias
+        self.device = device
+
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(in_features, 500)
+        self.fc2 = nn.Linear(500, 250)
+        self.fc3 = nn.Linear(250, 125)
+        self.fc4 = nn.Linear(125, out_features)
+        self.selu = nn.SELU()
+        self.bn = nn.BatchNorm1d(in_features)
+        self.drop = nn.Dropout(0.25)
+        self.relu = nn.ReLU() # does not perform like selu
+        self.softplus = nn.Softplus()
+
+    def forward(self, input_tensor: Tensor) -> Tensor:
+        # flatten_tensor = self.flatten(input_tensor)
+        #fc_bn = self.bn(input_tensor)
+        #fc1_out = self.selu(self.fc1(fc_bn))
+        fc1_out = self.selu(self.fc1(input_tensor))
+        fc1_out = self.drop(fc1_out)
+        fc2_out = self.selu(self.fc2(fc1_out))
+        fc2_out = self.drop(fc2_out)
+        fc3_out = self.selu(self.fc3(fc2_out))
+        fc3_out = self.drop(fc3_out)
+        fc4_out = self.selu(self.fc4(fc3_out))
+        fc4_out = self.softplus(fc4_out)
+        #fc4_out = F.softmax(fc4_out)
+        return fc4_out
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'DenseModel_based_on_FNN_SpikeDeeptector',
+            'in_features': self.in_features,
+            'out_features': self.out_features
         }

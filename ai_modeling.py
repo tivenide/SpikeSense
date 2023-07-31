@@ -393,6 +393,32 @@ class modeling():
 
         plt.show()
 
+    def plot_confusion_matrix_v2(self, confusion_matrix):
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import numpy as np
+        import pandas as pd
+        cm_sum = np.sum(confusion_matrix, axis=1)
+        cm_perc = confusion_matrix / cm_sum.astype(float) * 100
+        annot = np.empty_like(confusion_matrix).astype(str)
+        nrows, ncols = confusion_matrix.shape
+        for i in range(nrows):
+            for j in range(ncols):
+                c = confusion_matrix[i, j]
+                p = cm_perc[i, j]
+                if i == j:
+                    s = cm_sum[i]
+                    annot[i, j] = '%.1f%%\n%d/%d' % (p, c, s)
+                elif c == 0:
+                    annot[i, j] = ''
+                else:
+                    annot[i, j] = '%.1f%%\n%d' % (p, c)
+        cm = pd.DataFrame(confusion_matrix)
+        cm.index.name = 'True Class'
+        cm.columns.name = 'Predicted Class'
+        sns.heatmap(cm, annot=annot, fmt='', cmap='rocket_r')
+        plt.show()
+
     def plot_f1_score_over_epochs(self, metrics, title='F1-Score over Epochs'):
         import matplotlib.pyplot as plt
         epochs = range(1, len(metrics) + 1)

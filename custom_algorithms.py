@@ -156,3 +156,72 @@ def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, co
     plt.ylabel('Amplitude [µV]')
     plt.show()
     
+def plot_spiketrains_over_time(timestamps, spiketrain, marker_size=10, color_spike='red', spiketrain_gt=None, color_spike_gt='green'):
+    """
+    Plots spiketrains in kind of temporal raster plot. Optional ground truth spiketrain.
+
+    Args:
+        timestamps (nd.array): The timestamps of the total timeseries data.
+        spiketrain (nd.array): The timepoints of interest to be plotted. (in standard format)
+        marker_size (int): Size of the marker. Default: 10.
+        color_spike (str): Color of the marker for the spiketrain (detected). Default: 'red'.
+        spiketrain_gt (nd.array): The timepoints of interest to be plotted (ground truth). Default: None.
+        color_spike_gt (str): Color of the marker for the spiketrain (ground truth). Default: 'green'.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    num_arrays = len(spiketrain)
+    y_values = np.arange(1, num_arrays + 1)
+
+    plt.figure(figsize=(10, 6))
+    for i, array in enumerate(spiketrain):
+        x_values = np.array(array)
+        y_values_i = np.full_like(x_values, y_values[i])
+        plt.scatter(x_values, y_values_i, label=f'{i+1}', marker='o', color=color_spike, s=marker_size)
+
+    if spiketrain_gt is not None:
+        for i_gt, array_gt in enumerate(spiketrain_gt):
+            x_values_gt = np.array(array_gt)
+            y_values_i_gt = np.full_like(x_values_gt, y_values[i_gt])
+            plt.scatter(x_values_gt, y_values_i_gt, label=f'{i + 1}', marker='^', color=color_spike_gt, s=marker_size)
+
+    plt.xlabel('Time [sec]')
+    plt.ylabel('Electrode')
+    plt.yticks(y_values, [f'{i+1}' for i in range(num_arrays)])
+    plt.title('Spiketrain')
+    #plt.legend()
+    plt.grid(True)
+    plt.xlim(-0.005, max(timestamps)+0.005)
+    plt.show()
+
+def plot_spiketrain_over_time(timestamps, spiketrain, line_length=1.00, line_width=2, color_spike='black', y_label='Electrode'):
+    """
+    Plots spiketrain in kind of temporal raster plot with vertical lines.
+
+    Args:
+        timestamps (nd.array): The timestamps of the total timeseries data.
+        spiketrain (nd.array): The timepoints of interest to be plotted. (in standard format)
+        line_length (float): Length of vertical line. Default: 1.00
+        line_width (int): Width of vertical line. Default: 2.
+        color_spike (str): Color of the marker for the spiketrain. Default: 'black'.
+        y_label (str): Label of y-axis. Default: 'Electrode'
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    num_arrays = len(spiketrain)
+    y_values = np.arange(1, num_arrays + 1)
+
+    plt.figure(figsize=(10, 6))
+    for i, array in enumerate(spiketrain):
+        y_value = y_values[i]
+        for time in array:
+            plt.vlines(time, y_value - line_length/2, y_value + line_length/2, colors=color_spike, linewidth=line_width)
+
+    plt.xlabel('Time [sec]')
+    plt.ylabel(y_label)
+    plt.yticks(y_values, [f'{i+1}' for i in range(num_arrays)])
+    plt.title('Spiketrain')
+    plt.grid(True)
+    plt.xlim(-0.005, max(timestamps)+0.005)
+    plt.ylim(0.5, num_arrays + 0.5)
+    plt.show()

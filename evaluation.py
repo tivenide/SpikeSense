@@ -261,3 +261,22 @@ def calculate_estimated_snr_for_mea_recording(signal_raw):
     print(f'estimated snr: {(snr):>0.2f}')
     return snr
 
+def calculate_snr_for_mea_recording(signal_raw, signal_raw_noise):
+    import numpy as np
+    snrs = []
+    snrs_dB = []
+    for i in range(signal_raw.shape[1]):
+        electrode_data_signal = signal_raw[:, i]
+        electrode_data_noise = signal_raw_noise[:, i]
+        electrode_snr = np.sqrt(np.mean(electrode_data_signal**2)) / np.sqrt(np.mean(electrode_data_noise**2))
+        snrs.append(electrode_snr)
+
+        electrode_snr_dB = 10 * np.log10(electrode_snr)
+        snrs_dB.append(electrode_snr_dB)
+
+    snr = np.mean(snrs)
+    snr_dB = np.mean(snrs_dB)
+    print(f'snr: {(snr):>0.2f}')
+    print(f'snr: {(snr_dB):>0.2f} dB')
+    return snr, snrs, snr_dB, snrs_dB
+

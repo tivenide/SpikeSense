@@ -571,6 +571,24 @@ class using():
         self.loaded_model = loaded_model.to(device)
         self.device = device
 
+    def count_indexes_up_to_value(self, arr, value):
+        import numpy as np
+        # Find the indexes where the array values are less than or equal to the specified value
+        indexes = np.where(arr <= value)[0]
+        # Count the number of indexes
+        count = len(indexes)
+        return count
+
+    def get_window_size_in_index_count(self, timestamps, window_size_in_sec):
+        """
+        calculate window size in index counts from defined windowsize (in sec)
+        :param timestamps: all timestamps (used for calculation)
+        :param window_size_in_sec: windowsize in seconds
+        :return: window_size_in_count
+        """
+        window_size_in_count = self.count_indexes_up_to_value(timestamps, window_size_in_sec)
+        return window_size_in_count - 1
+
     def devide_2_vectors_into_equal_windows_with_step(self, x1, x2, window_size, step_size=None):
             """
             Devides vectors x1, x2 into windows with one window_size. step_size is used to generate more windows with overlap.
@@ -632,13 +650,15 @@ class using():
 
         return spikes
 
-    def application_of_model(self, signal_raw, timestamps):
+    def application_of_model(self, signal_raw, timestamps, window_size_in_sec=0.002):
         import numpy as np
         spiketrains = []
+        window_size_in_idx_counts = self.get_window_size_in_index_count(timestamps=timestamps, window_size_in_sec=window_size_in_sec)
+
         for electrode_index in range(signal_raw.shape[1]):
             print(f"current electrode index: {electrode_index}")
             electrode_data = signal_raw[:, electrode_index]
-            electrode_data_windowed, timestamps_windowed = self.devide_2_vectors_into_equal_windows_with_step(electrode_data, timestamps, window_size=20, step_size=None)
+            electrode_data_windowed, timestamps_windowed = self.devide_2_vectors_into_equal_windows_with_step(electrode_data, timestamps, window_size=window_size_in_idx_counts, step_size=None)
             spiketrains.append(self.detect_spikes_and_get_timepoints(electrode_data_windowed, timestamps_windowed))
         return np.array(spiketrains, dtype=object)
 

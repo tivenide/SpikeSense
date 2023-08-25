@@ -575,3 +575,20 @@ class read_data_from_h5():
 
         return metrics
 
+    def read_metrics_losses_from_h5(self):
+        import h5py
+        with h5py.File(self.file_path, 'r') as file:
+            losses_group = file['loss']
+            loss_eval = losses_group['evaluation_loss'][()]
+            loss_train = losses_group['training_loss'][()]
+
+        return loss_train, loss_eval
+
+    def read_metrics_get_epochs_count(self):
+        import h5py
+        with h5py.File(self.file_path, 'r') as file:
+            eval_group = file['metrics_evaluation']
+            epochs_count = 0
+            for epoch_key in eval_group.keys():
+                epochs_count = epochs_count+1
+        return epochs_count

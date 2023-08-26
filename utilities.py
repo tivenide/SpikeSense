@@ -530,7 +530,8 @@ class read_data_from_h5():
         with h5py.File(self.file_path, 'r') as file:
             if group_name in file:
                 metrics_group = file[group_name]
-                for epoch_key in metrics_group.keys():
+                epoch_keys_sorted = sorted(metrics_group.keys(), key=lambda x: int(x.split('_')[1]))
+                for i, epoch_key in enumerate(epoch_keys_sorted):
                     epoch_group = metrics_group[epoch_key]
                     metric_dict = {}
                     for key in epoch_group.keys():

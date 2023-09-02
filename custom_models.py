@@ -72,9 +72,9 @@ class TransformerModel(nn.Module):
         encoder_layer = nn.TransformerEncoderLayer(hidden_size, num_heads, dim_feedforward=hidden_size*4, dropout=dropout, activation='gelu')
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
         self.fc = nn.Linear(hidden_size, num_classes)
-        self.softmax = nn.Softmax(dim=1)
-        self.sigmoid = nn.Sigmoid()
+        #self.sigmoid = nn.Sigmoid()
         self.selu = nn.SELU()
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, src: Tensor) -> Tensor:
         batch_size, seq_len = src.shape[0], src.shape[1]
@@ -120,9 +120,9 @@ class DenseModel_based_on_FNN_SpikeDeeptector(nn.Module):
         self.fc3 = nn.Linear(250, 125)
         self.fc4 = nn.Linear(125, out_features)
         self.selu = nn.SELU()
-        self.bn = nn.BatchNorm1d(in_features)
+        #self.bn = nn.BatchNorm1d(in_features)
         self.drop = nn.Dropout(0.25)
-        self.relu = nn.ReLU() # does not perform like selu
+        #self.relu = nn.ReLU() # does not perform like selu
         self.softplus = nn.Softplus()
 
     def forward(self, input_tensor: Tensor) -> Tensor:

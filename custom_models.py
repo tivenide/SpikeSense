@@ -146,3 +146,83 @@ class DenseModel_based_on_FNN_SpikeDeeptector(nn.Module):
             'in_features': self.in_features,
             'out_features': self.out_features
         }
+
+class LSTMModel(nn.Module):
+    def __init__(self, in_features: int, hidden_features: int, out_features: int, num_layers=2, bias: bool = True,
+                 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'), dtype=None) -> None:
+        super(LSTMModel, self).__init__()
+
+        self.in_features = in_features
+        self.hidden_features = hidden_features
+        self.out_features = out_features
+        self.num_layers = num_layers
+        self.bias = bias
+        self.device = device
+
+        self.fc_1 = nn.Linear(in_features, hidden_features)
+        self.lstm_1 = nn.LSTM(hidden_features, hidden_features, num_layers, batch_first=True)
+        self.lstm_2 = nn.LSTM(hidden_features, hidden_features, num_layers, batch_first=True)
+        self.fc_2 = nn.Linear(hidden_features, out_features)
+        self.selu = nn.SELU()
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, input_tensor: Tensor) -> Tensor:
+        # h0 = torch.zeros(self.num_layers, input_tensor.size(0), self.hidden_features).to(self.device)
+        h0 = torch.zeros(self.num_layers, self.hidden_features).to(self.device)
+        c0 = torch.zeros(self.num_layers, self.hidden_features).to(self.device)
+        fc_1_out = self.selu(self.fc_1(input_tensor))
+        lstm_1_out, _ = self.lstm_1(fc_1_out, (h0, c0))
+        lstm_2_out, _ = self.lstm_2(lstm_1_out, (h0, c0))
+        fc_2_out = self.selu(self.fc_2(lstm_2_out))
+        fc_2_out = self.softmax(fc_2_out)
+        return fc_2_out
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'LSTMModel',
+            'in_features': self.in_features,
+            'hidden_features': self.hidden_features,
+            'num_layers': self.num_layers,
+            'out_features': self.out_features
+        }
+
+class CNNModel(nn.Module):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True,
+                device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'), dtype=None) -> None:
+        super(CNNModel, self).__init__()
+
+        self.device = device
+        self.bias = bias
+        self.in_features = in_features
+        self.out_features = out_features
+
+        self.conv1 = nn.Conv1d(1, 500, kernel_size=3, stride=1, padding=1)
+        #self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv1d(500, 500, kernel_size=3, stride=1, padding=1)
+        #self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.fc = nn.Linear(500 * (in_features // 4), out_features)
+
+        self.selu = nn.SELU()
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, input_tensor: Tensor) -> Tensor:
+        input_tensor = input_tensor.unsqueeze(1)
+        conv1_out = self.conv1(input_tensor)
+        conv1_out = self.selu(conv1_out)
+        pool1_out = self.pool1(conv1_out)
+        conv2_out = self.conv2(pool1_out)
+        conv2_out = self.selu(conv2_out)
+        pool2_out = self.pool2(conv2_out)
+        pool2_out = pool2_out.view(pool2_out.size(0), -1)
+        fc_out = self.fc(pool2_out)
+        fc_out = self.softmax(fc_out)
+        return fc_out
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'CNNModel',
+            'in_features': self.in_features,
+            'out_features': self.out_features
+        }

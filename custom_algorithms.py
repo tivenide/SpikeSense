@@ -124,7 +124,7 @@ def application_of_threshold_algorithm_quiroga(signal_raw, timestamps, factor_po
     print(f'Total detected spikes:\t{total_sum}')
     return np.array(spiketrains, dtype=object)
 
-def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, color_spike='red', spiketrain_gt=None, color_spike_gt='green'):
+def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, color_spike='red', spiketrain_gt=None, color_spike_gt='black'):
     """
     Plots timepoints of interest on top of a total timeseries.
     
@@ -156,7 +156,7 @@ def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, co
     plt.ylabel('Amplitude [µV]')
     plt.show()
     
-def plot_spiketrains_over_time(timestamps, spiketrain, marker_size=10, color_spike='red', spiketrain_gt=None, color_spike_gt='green'):
+def plot_spiketrains_over_time(timestamps, spiketrain, marker_size=10, color_spike='red', spiketrain_gt=None, color_spike_gt='black'):
     """
     Plots spiketrains in kind of temporal raster plot. Optional ground truth spiketrain.
 
@@ -166,7 +166,7 @@ def plot_spiketrains_over_time(timestamps, spiketrain, marker_size=10, color_spi
         marker_size (int): Size of the marker. Default: 10.
         color_spike (str): Color of the marker for the spiketrain (detected). Default: 'red'.
         spiketrain_gt (nd.array): The timepoints of interest to be plotted (ground truth). Default: None.
-        color_spike_gt (str): Color of the marker for the spiketrain (ground truth). Default: 'green'.
+        color_spike_gt (str): Color of the marker for the spiketrain (ground truth). Default: 'black'.
     """
     import numpy as np
     import matplotlib.pyplot as plt
@@ -229,7 +229,7 @@ def plot_spiketrain_over_time(timestamps, spiketrain, line_length=1.00, line_wid
 def plot_spiketrains_over_time_above_electrode_data(timestamps, electrode_data, spiketrain_1, spiketrain_2, spiketrain_3):
     """
     Plots spiketrains with vertical lines above one electrode data timeseries. Uses subplots with synchronized time axis.
-
+    Currently buggy in single function. Works with global parameter xlim_changed_triggered.
     Args:
         timestamps (nd.array): The timestamps of the total timeseries data.
         electrode_data(nd.array): The values of the total timeseries data of one electrode.
@@ -265,14 +265,14 @@ def plot_spiketrains_over_time_above_electrode_data(timestamps, electrode_data, 
     ax2.set_yticks([])
     ax2.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     for time in spiketrain_2:
-        ax2.axvline(x=time, color='red', linestyle='--')
+        ax2.axvline(x=time, color='red', linestyle='-')
 
     ax3 = fig.add_subplot(gs[2], sharex=ax4)
     ax3.set_ylabel('Det 2')
     ax3.set_yticks([])
     ax3.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     for time in spiketrain_3:
-        ax3.axvline(x=time, color='red', linestyle='--')
+        ax3.axvline(x=time, color='red', linestyle='-')
 
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9, hspace=0.1)
 

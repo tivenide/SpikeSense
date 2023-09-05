@@ -280,3 +280,98 @@ def calculate_snr_for_mea_recording(signal_raw, signal_raw_noise):
     print(f'snr: {(snr_dB):>0.2f} dB')
     return snr, snrs, snr_dB, snrs_dB
 
+def get_window_size_in_index_count(timestamps, window_size_in_sec):
+    """
+    calculate window size in index counts from defined windowsize (in sec)
+    :param timestamps: all timestamps (used for calculation)
+    :param window_size_in_sec: windowsize in seconds
+    :return: window_size_in_count
+    """
+    def count_indexes_up_to_value(arr, value):
+        import numpy as np
+        # Find the indexes where the array values are less than or equal to the specified value
+        indexes = np.where(arr <= value)[0]
+        # Count the number of indexes
+        count = len(indexes)
+        return count
+
+    window_size_in_count = count_indexes_up_to_value(timestamps, window_size_in_sec)
+    return window_size_in_count - 1
+
+def cut_windows_from_timeseries(raw_in, timestamps_in, times_in, window_range_in):
+    """
+    Cuts out windows from a time series at specified interesting timepoints.
+
+    Parameters:
+    - raw_in: ndarray, input time series data of shape (raw_length, ).
+    - timestamps_in: ndarray, timestamps corresponding to raw_in of shape (raw_length, ).
+    - times_in: ndarray, interesting timepoints within the time series of shape (times_length, ).
+    - window_range_in: int, the number of timesteps before and after each interesting timepoint.
+
+    Returns:
+    - output_vector: ndarray, a 2D array containing the windows of raw values of shape (times_length, window_length).
+    """
+    output_vector = []
+    #window_length = 2 * window_range_in + 1
+
+    for time_point in times_in:
+        # Find the index of the closest timestamp to the time_point
+        closest_idx = np.argmin(np.abs(timestamps_in - time_point))
+
+        # Calculate the start and end indices for the window
+        start_idx = max(0, closest_idx - window_range_in)
+        end_idx = min(len(raw_in), closest_idx + window_range_in + 1)
+
+        # Extract the window from raw_in
+        window = raw_in[start_idx:end_idx]
+
+        # Calculate the padding size on both sides
+        #left_padding = max(0, window_length - len(window)) // 2
+        #right_padding = max(0, window_length - len(window) - left_padding)
+
+        # Pad the window with zeros on both sides
+        #window = np.pad(window, (left_padding, right_padding), mode='constant')
+
+        output_vector.append(window)
+
+    return np.array(output_vector, dtype=object)
+
+def calculate_snr_for_mea_recording_with_ground_truth_spiketrain(signal_raw, timestamps, st_gt, window_range_in_sec=0.002):
+    '''
+    Calculates SNR for MEA recording with ground truth spiketrains.
+    The function uses the spiketrains input to extract the windows with spikes per electrode. Then absolute maximum of
+    a window is calculated and stored in a temporary vector. The median of this vector is used to calculate the SNR
+    with standard deviation of the raw signal per electrode. Finally, the median of all electrode SNR values is
+    calculated for resulting SNR value of MEA recording file.
+    :param signal_raw: array of size (number_total_timestamps, number_total_electrodes) which contains the raw values
+    :param timestamps: array of size (number_total_timestamps, ) which contains all corresponding timestamps
+    :param st_gt: spiketrains in standard array format (ground truth). Array of size (number_total_electrodes,)
+    - not all electrodes contains spikes.
+    :param window_range_in_sec: defines the positive and negative span around the ground truth time point
+    :return: snr
+    '''
+    import numpy as np
+
+    snrs = []
+    for i in range(st_gt.shape[0]):
+        if st_gt[i].size == 0:
+            pass
+        elif st_gt[i].size >= 0:
+            range_in = get_window_size_in_index_count(timestamps, window_range_in_sec)
+            windows = cut_windows_from_timeseries(raw_in=signal_raw[:, i], timestamps_in=timestamps, times_in=st_gt[i],
+                                                  window_range_in=range_in)
+
+            spike_abs_values = []
+            for n in range(0, len(windows)):
+                abs_value = abs(windows[n]).max()
+                spike_abs_values.append(abs_value)
+
+            median_spike_abs_value = np.median(spike_abs_values)
+            #mean_spike_abs_value = np.mean(spike_abs_values)
+            #peak_spike_abs_value = np.max(spike_abs_values)
+            std_value = np.std(signal_raw[:, i])
+
+            snr = median_spike_abs_value / std_value
+            snrs.append(snr)
+    print(f'calculated snr: {(np.median(snrs)):>0.2f}')
+    return np.median(snrs)

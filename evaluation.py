@@ -240,6 +240,8 @@ def calculate_metrics_for_different_gt_location_assignment_thresholds(path_to_h5
 
     return tps, fps, fns, thresholds
 
+# SNR calculation
+
 def calculate_estimated_snr_for_mea_recording(signal_raw):
     import numpy as np
     peaks = []
@@ -311,6 +313,7 @@ def cut_windows_from_timeseries(raw_in, timestamps_in, times_in, window_range_in
     Returns:
     - output_vector: ndarray, a 2D array containing the windows of raw values of shape (times_length, window_length).
     """
+    import numpy as np
     output_vector = []
     #window_length = 2 * window_range_in + 1
 
@@ -375,3 +378,154 @@ def calculate_snr_for_mea_recording_with_ground_truth_spiketrain(signal_raw, tim
             snrs.append(snr)
     print(f'calculated snr: {(np.median(snrs)):>0.2f}')
     return np.median(snrs)
+
+
+# plotting metrics after training for inspection
+
+def calc_mean_loss_over_epochs(loss, epochs_num):
+    import numpy as np
+    step_width = int(len(loss) / epochs_num)
+    loss_windows = []
+    means = []
+    for i in range(0, len(loss) - step_width + 1, step_width):
+        loss_windows.append(loss[i:i + step_width])
+
+    for i in range(0, len(loss_windows)):
+        mean = np.mean(loss_windows[i])
+        means.append(mean)
+    return means
+
+
+def plot_losses_smoothed_over_epochs(loss_train, loss_eval, epochs_num):
+    import matplotlib.pyplot as plt
+    loss_train_means = calc_mean_loss_over_epochs(loss=loss_train, epochs_num=epochs_num)
+    loss_eval_means = calc_mean_loss_over_epochs(loss=loss_eval, epochs_num=epochs_num)
+
+    epochs = range(1, epochs_num + 1)
+    plt.plot(epochs, loss_train_means, 'b', label='Training loss')
+    plt.plot(epochs, loss_eval_means, 'r', label='Evaluation loss')
+    plt.xlim(1, epochs_num)
+
+    # plt.plot(loss_train_means, 'b', label='Training Loss')
+    # plt.plot(loss_eval_means, 'r', label='Evaluation Loss')
+    plt.title('Training and evaluation losses')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+def plot_metrics_over_epochs_v2(metrics, title='Metrics over Epochs'):
+    import matplotlib.pyplot as plt
+    marker_size = 2
+    epochs = range(1, len(metrics) + 1)
+    f1_scores = [metric['f1'] for metric in metrics]
+    precision = [metric['precision'] for metric in metrics]
+    recall = [metric['recall'] for metric in metrics]
+
+    plt.plot(epochs, f1_scores, label='F1-Score', marker='o', markersize=marker_size)
+    plt.plot(epochs, precision, label='Precision', marker='o', markersize=marker_size)
+    plt.plot(epochs, recall, label='Recall', marker='o', markersize=marker_size)
+
+    plt.ylim(0, 1)
+    plt.xlim(1, len(metrics))
+
+    plt.xlabel('Epochs')
+    plt.ylabel('Score')
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def plot_precision_recall_curve_v2(precision, recall, baseline_factor=None):
+    """
+
+    :param precision:
+    :param recall:
+    :param baseline_factor: factor, which describes the random line in plot. Typically calculated by Positive Class / (Positive Class + Negative Class)
+    :return:
+    """
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import auc
+
+    pr_auc = auc(recall, precision)
+
+    plt.figure(figsize=(5, 5))
+
+    plt.plot(recall, precision, color='b', label=f'PR Curve (AUC = {pr_auc:.4f})')
+
+    if baseline_factor is not None:
+        plt.plot([0, 1], [baseline_factor, baseline_factor], color='r', linestyle='--',
+                 label=f'Random (AUC = {baseline_factor:.4f})')
+
+    plt.ylim(0, 1)
+    plt.xlim(0, 1)
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title(f'Precision-Recall Curve')
+    if baseline_factor is not None:
+        plt.legend()
+    plt.show()
+
+
+def plot_roc_curve_v2(fpr, tpr, auc):
+    import matplotlib.pyplot as plt
+    # import numpy as np
+    # gmeans = np.sqrt(tpr * (1 - fpr))
+    # locate the index of the largest g-mean
+    # ix = np.argmax(gmeans)
+    # print('Best Threshold=%f, G-Mean=%.3f' % (thresholds[ix], gmeans[ix]))
+
+    plt.figure(figsize=(5, 5))
+    plt.plot(fpr, tpr, color='b', label=f'ROC Curve (AUC = {auc:.2f})')
+    plt.plot([0, 1], [0, 1], color='r', linestyle='--', label='Random (AUC = 0.50)')
+    # plt.scatter(fpr[ix], tpr[ix], marker='o', color='black', label=f'Best (gmeans: {gmeans[ix]:.2f})')
+    plt.ylim(0, 1)
+    plt.xlim(0, 1)
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic Curve')
+    plt.legend()
+    plt.show()
+
+
+def pipeline_for_basic_evaluation_plots_of_training_process(file_path_to_dataset_h5, baseline_factor):
+    """
+    A basic pipeline for:
+        - loading metrics from saved dataset.h5 in standard format
+        - plotting f1, precision, recall over epochs for training and evaluation
+        - plotting loss for training and evaluation
+        - plotting roc and pr-curve for test
+    :param file_path_to_dataset_h5: file to saved dataset.h5 in standard format
+    :param baseline_factor: baseline factor for pr-curve
+    :return: none
+    """
+    from utilities import read_data_from_h5
+    data_obj = read_data_from_h5(file_path=file_path_to_dataset_h5)
+
+    # loading metrics
+    metrics_train = data_obj.read_metrics_from_h5(mode='train')
+    metrics_eval = data_obj.read_metrics_from_h5(mode='eval')
+    metrics_test = data_obj.read_metrics_test_from_h5()
+
+    # plotting f1, precision, recall over epochs
+    plot_metrics_over_epochs_v2(metrics_train, title='Metrics over epochs (training)')
+    plot_metrics_over_epochs_v2(metrics_eval, title='Metrics over epochs (evaluation)')
+
+    # loading and plotting loss
+    loss_train, loss_eval = data_obj.read_metrics_losses_from_h5()
+    epochs_num = data_obj.read_metrics_get_epochs_count()
+    plot_losses_smoothed_over_epochs(loss_train=loss_train, loss_eval=loss_eval, epochs_num=epochs_num)
+
+    # plotting roc and pr-curve
+    prc = metrics_test['pr_curve']['precision']
+    rcl = metrics_test['pr_curve']['recall']
+
+    fpr = metrics_test['roc_curve_1']['fpr']
+    tpr = metrics_test['roc_curve_1']['tpr']
+    auc = metrics_test['roc_curve_1']['auc']
+    plot_precision_recall_curve_v2(prc, rcl, baseline_factor=baseline_factor)
+    plot_roc_curve_v2(fpr, tpr, auc)
+

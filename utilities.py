@@ -655,3 +655,9 @@ def import_dat_return_data(path_to_dat_file:str):
     #Return values
     print(".dat file successfully imported and into pd.dataframe formatted")
     return data_2, meta, names_formatted_list, error_var
+
+def count_parameters(model):
+    # from https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325
+    count = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f'Modelname: {model.__class__.__name__}\t\tParameters: {count}')
+    return count

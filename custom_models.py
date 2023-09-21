@@ -69,7 +69,7 @@ class TransformerModel(nn.Module):
 
         self.embedding = nn.Linear(input_dim, hidden_size)
         self.pos_encoder = PositionalEncoding(hidden_size, dropout)
-        encoder_layer = nn.TransformerEncoderLayer(hidden_size, num_heads, dim_feedforward=hidden_size*4, dropout=dropout, activation='gelu')
+        encoder_layer = nn.TransformerEncoderLayer(hidden_size, num_heads, dim_feedforward=hidden_size*4, dropout=dropout, activation='gelu', norm_first=False)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
         self.fc = nn.Linear(hidden_size, num_classes)
         #self.sigmoid = nn.Sigmoid()
@@ -101,6 +101,54 @@ class TransformerModel(nn.Module):
             'num_layers': self.num_layers,
             'num_heads': self.num_heads,
             'dropout': self.dropout
+        }
+
+class TransformerModelDefault(nn.Module):
+    def __init__(self, input_dim: int = 1, hidden_size: int = 512, num_classes: int = 2, num_layers: int = 6, num_heads: int = 8,
+                 dropout: float = 0.1, activation: str = 'relu', norm_first: bool = False, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
+        super(TransformerModelDefault, self).__init__()
+
+        self.input_dim = input_dim
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.dropout = dropout
+        self.activation = activation
+        self.norm_first = norm_first
+        self.device = device
+
+        self.embedding = nn.Linear(input_dim, hidden_size)
+        self.pos_encoder = PositionalEncoding(hidden_size, dropout)
+        encoder_layer = nn.TransformerEncoderLayer(hidden_size, num_heads, dim_feedforward=hidden_size*4, dropout=dropout, activation=activation, norm_first=norm_first)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
+        self.fc = nn.Linear(hidden_size, num_classes)
+        self.selu = nn.SELU()
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, src: Tensor) -> Tensor:
+        batch_size, seq_len = src.shape[0], src.shape[1]
+        src = src.view(batch_size, seq_len, self.input_dim)
+        src = src.transpose(0, 1).contiguous()
+        src = self.embedding(src) # selu1: self.selu(self.embedding(src))
+        src = self.pos_encoder(src)
+        output = self.transformer_encoder(src)
+        output = output.mean(dim=0)
+        output = self.fc(output) # selu2: self.selu(self.fc(output))
+        output = self.softmax(output)
+        return output
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'TransformerModelDefault',
+            'input_dim': self.input_dim,
+            'hidden_size': self.hidden_size,
+            'num_classes': self.num_classes,
+            'num_layers': self.num_layers,
+            'num_heads': self.num_heads,
+            'dropout': self.dropout,
+            'activation': self.activation,
+            'norm_first': self.norm_first
         }
 
 
@@ -224,5 +272,39 @@ class CNNModel(nn.Module):
         return {
             'model_type': 'CNNModel',
             'in_features': self.in_features,
+            'out_features': self.out_features
+        }
+
+
+class FNNModel_relu(nn.Module):
+    def __init__(self, in_features: int, hidden_features: int, out_features: int, bias: bool = True,
+                 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'), dtype=None) -> None:
+        super(FNNModel_relu, self).__init__()
+
+        self.in_features = in_features
+        self.hidden_features = hidden_features
+        self.out_features = out_features
+        self.bias = bias
+        self.device = device
+
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.fc2 = nn.Linear(hidden_features, hidden_features)
+        self.fc3 = nn.Linear(hidden_features, out_features)
+        self.relu = nn.ReLU()
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, input_tensor: Tensor) -> Tensor:
+        # flatten_tensor = self.flatten(input_tensor)
+        fc1_out = self.relu(self.fc1(input_tensor))
+        fc2_out = self.relu(self.fc2(fc1_out))
+        fc3_out = self.relu(self.fc3(fc2_out))
+        return self.softmax(fc3_out)
+
+    def get_model_metadata(self):
+        return {
+            'model_type': 'FNNModel_relu',
+            'in_features': self.in_features,
+            'hidden_features': self.hidden_features,
             'out_features': self.out_features
         }

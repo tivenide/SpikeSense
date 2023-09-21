@@ -101,6 +101,8 @@ def application_of_threshold_algorithm_quiroga(signal_raw, timestamps, factor_po
         print(f'fs:\t{fs} Hz\tlowcut:\t{lowcut} Hz\thighcut:\t{highcut} Hz\torder:\t{order}')
     spiketrains = []
     sum = []
+    th_pos = []
+    th_neg = []
     for i in range(signal_raw.shape[1]):
         if verbose:
             print('current electrode index:', i)
@@ -112,6 +114,8 @@ def application_of_threshold_algorithm_quiroga(signal_raw, timestamps, factor_po
         if verbose:
             print('--- calculation of threshold')
         threshold = np.median(abs(electrode_data_filtered)/0.6745)
+        th_pos_cur = threshold * factor_pos
+        th_neg_cur = -threshold * factor_neg
         if verbose:
             print('--- detection of spikes')
         timepoints_of_interest = getting_timepoints_of_interest_from_threshold(electrode_data_filtered, timestamps, threshold, factor_pos, factor_neg)
@@ -120,9 +124,11 @@ def application_of_threshold_algorithm_quiroga(signal_raw, timestamps, factor_po
         timepoints_of_interest_cleaned = clean_timepoints_of_interest(timepoints_of_interest, refractory_period=refractory_period)
         spiketrains.append(timepoints_of_interest_cleaned)
         sum.append(timepoints_of_interest_cleaned.size)
+        th_pos.append(th_pos_cur)
+        th_neg.append(th_neg_cur)
     total_sum = np.sum(sum)
     print(f'Total detected spikes:\t{total_sum}')
-    return np.array(spiketrains, dtype=object)
+    return np.array(spiketrains, dtype=object), th_pos, th_neg
 
 def plot_spiketrain_on_electrode_data(timestamps, electrode_data, spiketrain, color_spike='red', spiketrain_gt=None, color_spike_gt='black'):
     """

@@ -297,3 +297,43 @@ def plot_spiketrains_over_time_above_electrode_data(timestamps, electrode_data, 
     ax4.callbacks.connect('xlim_changed', on_xlims_change)
 
     plt.show()
+
+def plot_well_time_series_axion(df, timestamps, well_name, position_pattern, show_axes_labels=False):
+    """
+    Plots the time series of electrodes in subplots based on the given position pattern.
+    For Axion Multiwell MEA-System.
+
+    :param df: The Pandas DataFrame containing electrode time series.
+    :param timestamps: The time vector for the x-axis of the plots.
+    :param well_name: The name of the well whose time series will be plotted.
+    :param position_pattern: The position pattern for the electrodes in a 2D list.
+    :param show_axes_labels: True if axis labels should be shown only in the corner plot, otherwise False.
+
+    example position_pattern:
+    position_pattern = [
+    [14, 24, 34, 44],
+    [13, 23, 33, 43],
+    [12, 22, 32, 42],
+    [11, 21, 31, 41]
+    ]
+
+    """
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(12, 8))
+
+    num_rows, num_cols = len(position_pattern), len(position_pattern[0])
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            plt.subplot(num_rows, num_cols, i * num_cols + j + 1)
+            position = position_pattern[i][j]
+            sensor_column = f"{well_name} {position}"
+            plt.plot(timestamps, df[sensor_column])
+            plt.title(sensor_column)
+
+            if show_axes_labels or (i == num_rows - 1 and j == 0):
+                plt.xlabel("Time in s")
+                plt.ylabel("Voltage in V")
+
+    plt.tight_layout()
+    plt.show()

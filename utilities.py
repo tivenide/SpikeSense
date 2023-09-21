@@ -516,6 +516,16 @@ class read_data_from_h5():
                     model_metadata[key] = value
         return model_metadata
 
+    def read_trainer_metadata_from_h5(self):
+        import h5py
+        model_metadata = {}
+        with h5py.File(self.file_path, 'r') as file:
+            if 'trainer_meta' in file:
+                model_meta_group = file['trainer_meta']
+                for key, value in model_meta_group.attrs.items():
+                    model_metadata[key] = value
+        return model_metadata
+
 
     def read_metrics_from_h5(self, mode):
         import h5py

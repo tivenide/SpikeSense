@@ -650,7 +650,7 @@ class using():
 
         return spikes
 
-    def application_of_model(self, signal_raw, timestamps, window_size_in_sec=0.002):
+    def application_of_model(self, signal_raw, timestamps, window_size_in_sec=0.002, step_size=None):
         import numpy as np
         spiketrains = []
         window_size_in_idx_counts = self.get_window_size_in_index_count(timestamps=timestamps, window_size_in_sec=window_size_in_sec)
@@ -658,7 +658,7 @@ class using():
         for electrode_index in range(signal_raw.shape[1]):
             print(f"current electrode index: {electrode_index}")
             electrode_data = signal_raw[:, electrode_index]
-            electrode_data_windowed, timestamps_windowed = self.devide_2_vectors_into_equal_windows_with_step(electrode_data, timestamps, window_size=window_size_in_idx_counts, step_size=None)
+            electrode_data_windowed, timestamps_windowed = self.devide_2_vectors_into_equal_windows_with_step(electrode_data, timestamps, window_size=window_size_in_idx_counts, step_size=step_size)
             spiketrains.append(self.detect_spikes_and_get_timepoints(electrode_data_windowed, timestamps_windowed))
         return np.array(spiketrains, dtype=object)
 

@@ -298,6 +298,66 @@ def plot_spiketrains_over_time_above_electrode_data(timestamps, electrode_data, 
 
     plt.show()
 
+def plot_spiketrains_over_time_above_electrode_data_without_gt(timestamps, electrode_data, spiketrain_1, spiketrain_2):
+    """
+    Plots spiketrains with vertical lines above one electrode data timeseries. Uses subplots with synchronized time axis.
+    Currently buggy in single function. Works with global parameter xlim_changed_triggered.
+    Args:
+        timestamps (nd.array): The timestamps of the total timeseries data.
+        electrode_data(nd.array): The values of the total timeseries data of one electrode.
+        spiketrain_1 (nd.array): The timepoints of interest to be plotted of one electrode. Usually first detection timepoints.
+        spiketrain_2 (nd.array): The timepoints of interest to be plotted of one electrode. Usually second detection algorithm.
+
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.gridspec import GridSpec
+
+    fig = plt.figure(figsize=(20, 8))
+    gs = GridSpec(3, 1, height_ratios=[0.2, 0.2, 2], hspace=0.05)
+
+    # Plot the electrode data in the fourth subplot first
+    ax3 = fig.add_subplot(gs[2])
+    ax3.plot(timestamps, electrode_data)
+    ax3.set_xlabel('Time in sec')
+    ax3.set_ylabel('Voltage in µV')
+
+    # Plot the spiketrains above electrode data
+    ax1 = fig.add_subplot(gs[0], sharex=ax3)
+    ax1.set_title('Comparison of spiketrains')
+    ax1.set_ylabel('Det 1')
+    ax1.set_yticks([])
+    ax1.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+    for time in spiketrain_1:
+        ax1.axvline(x=time, color='red', linestyle='-')
+
+    ax2 = fig.add_subplot(gs[1], sharex=ax3)
+    ax2.set_ylabel('Det 2')
+    ax2.set_yticks([])
+    ax2.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+    for time in spiketrain_2:
+        ax2.axvline(x=time, color='red', linestyle='-')
+
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9, hspace=0.1)
+
+    # Variable to prevent retriggering of the xlim_changed event
+    xlim_changed_triggered = False
+
+    # Adjusting the axis limits and zoom behavior for all subplots
+    def on_xlims_change(ax):
+        global xlim_changed_triggered
+        if not xlim_changed_triggered:
+            xlim_changed_triggered = True
+            for subplot in [ax1, ax2, ax3]:
+                subplot.set_xlim(ax.get_xlim())
+        xlim_changed_triggered = False
+
+    ax3.callbacks.connect('xlim_changed', on_xlims_change)
+
+    plt.show()
+
+
+
 def plot_well_time_series_axion(df, timestamps, well_name, position_pattern, show_axes_labels=False):
     """
     Plots the time series of electrodes in subplots based on the given position pattern.

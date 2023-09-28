@@ -605,20 +605,6 @@ class read_data_from_h5():
         return epochs_count
 
 
-#custom import functions
-def import_recording_h5_only_signal_raw(path):
-    """
-    Import recording h5 file from MEArec.
-    :param path: path to file
-    :return: signal_raw
-    """
-    import h5py  # hdf5
-    import numpy as np
-    h5 = h5py.File(path, 'r')
-    signal_raw = np.array(h5["recordings"])
-    return signal_raw
-
-
 
 def count_parameters(model):
     # from https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325

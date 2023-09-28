@@ -1,3 +1,17 @@
+#custom import functions
+def import_recording_h5_only_signal_raw(path):
+    """
+    Import recording h5 file from MEArec.
+    :param path: path to file
+    :return: signal_raw
+    """
+    import h5py  # hdf5
+    import numpy as np
+    h5 = h5py.File(path, 'r')
+    signal_raw = np.array(h5["recordings"])
+    return signal_raw
+
+
 def import_dat_return_data(path_to_dat_file:str):
     """
         Imports existing .dat file from LabView Software and fit data in pd.Dataframe.

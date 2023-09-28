@@ -492,6 +492,116 @@ class prepro():
 
         return x_train_res, y_train_res, x_test_crp, y_test_crp, x_val_crp, y_val_crp
 
+    # here optional normalization and scaling functions / pipelines
+    def normalize_dataset(self, dataset, scaler_type='minmax'):
+        """
+        Normalizes the raw data in the input array using the specified scaler type
+        :param dataset: A numpy array representing the dataset to be scaled, which is devided by windows.
+        :param scaler_type: possible Scalers from sklearn.preprocessing: StandardScaler, MinMaxScaler, RobustScaler
+        :return: A numpy array representing the merged data, which is devided by windows. With rows corresponding to windows
+            and columns corresponding to signal_raw (normalized), labels, timestamps and electrode number. No assignment to the recording!
+        """
+        import numpy as np
+        from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+        if scaler_type == 'standard':
+            scaler = StandardScaler()
+        elif scaler_type == 'minmax':
+            scaler = MinMaxScaler()
+        elif scaler_type == 'robust':
+            scaler = RobustScaler()
+        else:
+            raise ValueError(
+                f"Scaler type {scaler_type} not supported. Please choose 'standard', 'minmax', or 'robust'")
+
+        print(f"Normalization with scaler type '{scaler_type}' started")
+        for i in range(dataset.shape[0]):
+            data_raw = dataset[i]
+            data_norm = scaler.fit_transform(data_raw.reshape(-1, 1))
+            dataset[i] = data_norm.flatten()
+        print(f"Normalization with scaler type '{scaler_type}' finished")
+        return dataset
+
+    def saving_normalized_datasets_in_h5(self, file_path, x_train_res, y_train_res, x_test_crp, y_test_crp, x_val_crp,
+                                         y_val_crp, scaler_type='minmax'):
+        """
+        saving normalized datasets in new .h5 file. (commonly optionally after preprocessing)
+        Best practice:
+        -load_datasets_from_h5(origin_file.h5)
+        -saving_normalized_datasets_in_h5()
+
+        :param file_path: target path to save .h5 file
+        :param x_train_res:
+        :param y_train_res:
+        :param x_test_crp:
+        :param y_test_crp:
+        :param x_val_crp:
+        :param y_val_crp:
+        :param scaler_type:
+        :return:
+        """
+        import h5py
+        x_train_res = self.normalize_dataset(x_train_res, scaler_type)
+        print('train normalization finished')
+        x_test_crp = self.normalize_dataset(x_test_crp, scaler_type)
+        print('test normalization finished')
+        x_val_crp = self.normalize_dataset(x_val_crp, scaler_type)
+        print('val normalization finished')
+        print('total normalization finished')
+
+        with h5py.File(file_path, 'w') as file:
+            # Save datasets as separate datasets
+            datasets_group = file.create_group('datasets')
+            datasets_group.attrs['scaler_type'] = scaler_type
+            datasets_group.create_dataset('x_train', data=x_train_res)
+            datasets_group.create_dataset('y_train', data=y_train_res)
+            datasets_group.create_dataset('x_test', data=x_test_crp)
+            datasets_group.create_dataset('y_test', data=y_test_crp)
+            datasets_group.create_dataset('x_val', data=x_val_crp)
+            datasets_group.create_dataset('y_val', data=y_val_crp)
+
+        print(f'saving finished in:')
+        print(file_path)
+
+    def saving_scaled_datasets_in_h5(self, file_path, x_train_res, y_train_res, x_test_crp, y_test_crp, x_val_crp, y_val_crp, scale_factor=0.25):
+        """
+        saving scaled datasets in new .h5 file. (commonly optionally after preprocessing)
+        Best practice:
+        -load_datasets_from_h5(origin_file.h5)
+        -saving_normalized_datasets_in_h5()
+
+        :param file_path: target path to save .h5 file
+        :param x_train_res:
+        :param y_train_res:
+        :param x_test_crp:
+        :param y_test_crp:
+        :param x_val_crp:
+        :param y_val_crp:
+        :param scale_factor:
+        :return:
+        """
+
+        import h5py
+        print(f"Scaling and saving with scale_factor {scale_factor} started")
+        x_train_res = x_train_res * scale_factor
+        x_test_crp = x_test_crp * scale_factor
+        x_val_crp = x_val_crp * scale_factor
+
+        with h5py.File(file_path, 'w') as file:
+
+            # Save datasets as separate datasets
+            datasets_group = file.create_group('datasets')
+            datasets_group.attrs['scale_factor'] = scale_factor
+            datasets_group.create_dataset('x_train', data=x_train_res)
+            datasets_group.create_dataset('y_train', data=y_train_res)
+            datasets_group.create_dataset('x_test', data=x_test_crp)
+            datasets_group.create_dataset('y_test', data=y_test_crp)
+            datasets_group.create_dataset('x_val', data=x_val_crp)
+            datasets_group.create_dataset('y_val', data=y_val_crp)
+
+        print(f'saving finished in:')
+        print(file_path)
+
+
 class read_data_from_h5():
     def __init__(self, file_path):
         self.file_path = file_path

@@ -529,3 +529,65 @@ def pipeline_for_basic_evaluation_plots_of_training_process(file_path_to_dataset
     plot_precision_recall_curve_v2(prc, rcl, baseline_factor=baseline_factor)
     plot_roc_curve_v2(fpr, tpr, auc)
 
+def extract_model_metrics_and_parameters_from_folders(path_to_models_folder=f'work_dir_tm_hyper'):
+    """
+    helper function to check model performance of different processed models.
+    caution. requires customized file structures.
+    :param path_to_models_folder: path to folder which contains development folders of a model.
+    :return: np.array
+    """
+    from pathlib import Path
+    import numpy as np
+    from sklearn.metrics import auc
+
+    from utilities import read_data_from_h5
+    paths = [p for p in Path(path_to_models_folder).iterdir()]
+
+    models_names = []
+    models_prcs = []
+    models_rcls = []
+    models_f1s = []
+    models_pr_aucs = []
+    models_meta = []
+    trainer_meta = []
+    prepros_meta = []
+
+    for i, path in enumerate(paths):
+        print(i, path)
+        path = str(path)
+        parts = path.split('/')
+        parts1 = parts[1].split('_')
+        if len(parts1) >= 9: #9
+            file_path_to_dataset_h5 = path + '/dataset.h5'
+            print(file_path_to_dataset_h5)
+
+            data_obj = read_data_from_h5(file_path=file_path_to_dataset_h5)
+            model_meta = data_obj.read_model_metadata_from_h5()
+            train_meta = data_obj.read_trainer_metadata_from_h5()
+            #prepro_meta = data_obj.read_prepro_metadata_from_h5()
+            metrics_test = data_obj.read_metrics_test_from_h5()
+            cm_test = metrics_test['confusion_matrix']
+            tn = cm_test[0,0]
+            fn = cm_test[1,0]
+            fp = cm_test[0,1]
+            tp = cm_test[1,1]
+            prc = tp / (tp + fp)
+            rcl = tp / (tp + fn)
+            f1 = 2 * ((prc*rcl)/(prc+rcl))
+
+            precision = metrics_test['pr_curve']['precision']
+            recall = metrics_test['pr_curve']['recall']
+            pr_auc = auc(recall, precision)
+
+            models_names.append(parts[1])
+            models_meta.append(model_meta)
+            trainer_meta.append(train_meta)
+            #prepros_meta.append(prepro_meta)
+            models_prcs.append(prc)
+            models_rcls.append(rcl)
+            models_f1s.append(f1)
+            models_pr_aucs.append(pr_auc)
+
+    ds = np.array([models_names, models_meta, trainer_meta, models_prcs, models_rcls, models_f1s, models_pr_aucs])
+    ds_trans = ds.transpose()
+    return ds_trans

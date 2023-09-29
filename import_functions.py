@@ -1,5 +1,5 @@
 #custom import functions
-def import_recording_h5_only_signal_raw(path):
+def import_MEArec_recording_h5_only_signal_raw(path):
     """
     Import recording h5 file from MEArec.
     :param path: path to file

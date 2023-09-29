@@ -1,4 +1,44 @@
 #custom import functions
+
+class MEArecRecordingH5Importer():
+    """
+        A class for importing data from MEArec recording H5 files.
+
+        :param str path: The path to the MEArec recording H5 file.
+
+        Methods:
+        - :meth:`import_signal_raw()`: Returns the raw signal data from the H5 file.
+        - :meth:`import_timestamps()`: Returns the timestamps associated with the signal data.
+
+        Example::
+            >>> # Create an instance of MEArecRecordingH5Importer
+            >>> importer = MEArecRecordingH5Importer('path/to/recording.h5')
+            >>>
+            >>> # Import signal raw data
+            >>> signal_raw = importer.import_signal_raw()
+            >>>
+            >>> # Import timestamps
+            >>> timestamps = importer.import_timestamps()
+
+        Note: Ensure to call :meth:`_load_data` before using any importing methods to load the H5 file into memory.
+    """
+    def __init__(self, path):
+        self.path = path
+        self._load_data()
+
+    def _load_data(self):
+        import h5py
+        self.h5_file = h5py.File(self.path, 'r')
+
+    def import_signal_raw(self):
+        import numpy as np
+        return np.array(self.h5_file["recordings"])
+
+    def import_timestamps(self):
+        import numpy as np
+        return np.array(self.h5_file["timestamps"])
+
+
 def import_MEArec_recording_h5_only_signal_raw(path):
     """
     Import recording h5 file from MEArec.

@@ -1,15 +1,13 @@
-def application():
+def application(importer, output_path):
     print('SpikeSense application started')
 
-    path_to_mearec_h5 = f'mearec_recording_file.h5'
-    path_to_model = f'work_dir_tm_selu1_lr_1e-5/best_TransformerModel.pth'
-    path_to_results_npy = f'st_results_tm.npy'
-    path_to_results_h5 = f'st_results_tm.h5'
-    device = f'cuda:0'
+    signal_raw = importer.import_signal_raw()
+    timestamps = importer.import_timestamps()
 
-    from utilities import prepro
-    prepro_object = prepro(path_to_original_recordings='', path_to_target_prepro_results='', threshold=10, windowsize_in_sec=0.001, step_size=None, feature_calculation=False, scaler_type='standard', sampling_strategy=0.5) # here: parameters just for initialization
-    signal_raw, timestamps, ground_truth, channel_positions, template_locations = prepro_object.import_recording_h5(path=path_to_mearec_h5)
+    path_to_model = f'work_dir_tm_selu1_lr_1e-5/best_TransformerModel.pth'
+    path_to_results_npy = f'{output_path}_st_tm.npy'
+    path_to_results_h5 = f'{output_path}_st_tm.h5'
+    device = f'cuda:0'
 
     import torch
     from ai_modeling import using
@@ -28,5 +26,3 @@ def application():
 
     from evaluation import save_spiketrains_to_hdf5
     save_spiketrains_to_hdf5(input_array=st, filename=path_to_results_h5)
-
-application()

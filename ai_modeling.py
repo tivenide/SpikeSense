@@ -233,9 +233,9 @@ class modeling():
         for batch, (feature, target) in enumerate(self.train_dataloader):
             feature, target = feature.to(self.device), target.type(torch.LongTensor).to(self.device)
 
-            target_one_hot = torch.zeros((target.size(0), self.n_classes))
-            target_one_hot = target_one_hot.to(self.device)
-            target_one_hot.scatter_(1, target.unsqueeze(1), 1)
+            #target_one_hot = torch.zeros((target.size(0), self.n_classes))
+            #target_one_hot = target_one_hot.to(self.device)
+            #target_one_hot.scatter_(1, target.unsqueeze(1), 1)
 
             prediction = self.model(feature)
 
@@ -265,9 +265,9 @@ class modeling():
             for batch, (feature, target) in enumerate(self.eval_dataloader):
                 feature, target = feature.to(self.device), target.type(torch.LongTensor).to(self.device)
 
-                target_one_hot = torch.zeros((target.size(0), self.n_classes))
-                target_one_hot = target_one_hot.to(self.device)
-                target_one_hot.scatter_(1, target.unsqueeze(1), 1)
+                #target_one_hot = torch.zeros((target.size(0), self.n_classes))
+                #target_one_hot = target_one_hot.to(self.device)
+                #target_one_hot.scatter_(1, target.unsqueeze(1), 1)
 
                 prediction = self.model(feature)
                 self.eval_loss = self.loss_fn(prediction, target)
@@ -288,9 +288,9 @@ class modeling():
             self.model.eval()
             for batch, (feature, target) in enumerate(self.test_dataloader):
                 feature, target = feature.to(self.device), target.type(torch.LongTensor).to(self.device)
-                target_one_hot = torch.zeros((target.size(0), self.n_classes))
-                target_one_hot = target_one_hot.to(self.device)
-                target_one_hot.scatter_(1, target.unsqueeze(1), 1)
+                #target_one_hot = torch.zeros((target.size(0), self.n_classes))
+                #target_one_hot = target_one_hot.to(self.device)
+                #target_one_hot.scatter_(1, target.unsqueeze(1), 1)
                 prediction = self.model(feature)
                 test_target.append(target)
                 test_pred.append(prediction)
@@ -343,13 +343,13 @@ class modeling():
             fpr_1, tpr_1, thr_1 = roc_curve(target, probabilities[:,1])
             metrics['roc_curve_1'] = {'fpr': fpr_1, 'tpr': tpr_1, 'thr': thr_1, 'auc': auc(fpr_1, tpr_1)}
             #print(f"FPR: {fpr} \tTPR: {tpr}")
-            print(f"class 1: AUC: {(auc(fpr_1, tpr_1)):>0.2f}")
+            #print(f"class 1: AUC: {(auc(fpr_1, tpr_1)):>0.2f}")
 
             # class/neuron 0: noise
             fpr_0, tpr_0, thr_0 = roc_curve(target, probabilities[:,0])
             metrics['roc_curve_0'] = {'fpr': fpr_0, 'tpr': tpr_0, 'auc': auc(fpr_0, tpr_0)}
             #print(f"FPR: {fpr} \tTPR: {tpr}")
-            print(f"class 0: AUC: {(auc(fpr_0, tpr_0)):>0.2f}")
+            #print(f"class 0: AUC: {(auc(fpr_0, tpr_0)):>0.2f}")
 
         return metrics
 

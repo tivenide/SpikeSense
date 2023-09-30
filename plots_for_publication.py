@@ -213,7 +213,7 @@ def calculate_and_plot_f1_scores_of_different_methods_for_different_noise_levels
     from evaluation import calculate_estimated_snr_for_mea_recording
     from evaluation import calculate_snr_for_mea_recording_with_ground_truth_spiketrain
     from utilities import prepro
-    from custom_algorithms import application_of_threshold_algorithm_quiroga
+    from algorithms import application_of_threshold_algorithm_quiroga
 
     prc = []
     rcl = []

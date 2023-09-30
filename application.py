@@ -10,7 +10,7 @@ def application(importer, output_path):
     device = f'cuda:0'
 
     import torch
-    from ai_modeling import using
+    from ml_framework import using
     from custom_models import TransformerModel
 
     loaded_model = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=12, num_heads=8, dropout=0.1)

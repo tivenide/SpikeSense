@@ -11,7 +11,7 @@ def application(importer, output_path):
 
     import torch
     from ml_framework import using
-    from custom_models import TransformerModel
+    from ml_models import TransformerModel
 
     loaded_model = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=12, num_heads=8, dropout=0.1)
     loaded_model.load_state_dict(torch.load(path_to_model))

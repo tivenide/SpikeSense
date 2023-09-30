@@ -10,7 +10,7 @@ def create_spiketrains_for_different_sample_frequencies():
     from utilities import load_frame_from_disk
     from evaluation import save_spiketrains_to_hdf5
     from ml_framework import using
-    from custom_models import TransformerModel
+    from ml_models import TransformerModel
 
     loaded_model = TransformerModel(input_dim=1, hidden_size=64, num_classes=2, num_layers=6, num_heads=8, dropout=0.1)
     loaded_model.load_state_dict(torch.load('work_dir_tm_hyper/tm_selu1_0-1_64_8_6_32_1e-4_1e-5_under_0-8/best_TransformerModel.pth'))
@@ -85,7 +85,7 @@ def calculate_and_plot_evaluation_results_on_different_sample_frequencies():
 def create_spiketrains_for_different_window_sizes():
     import torch
     from ml_framework import using
-    from custom_models import TransformerModel
+    from ml_models import TransformerModel
     from utilities import prepro
     from utilities import save_frame_to_disk
     from evaluation import save_spiketrains_to_hdf5
@@ -172,7 +172,7 @@ def create_spiketrains_for_different_noise_levels():
     from utilities import save_frame_to_disk
     from evaluation import save_spiketrains_to_hdf5
     from ml_framework import using
-    from custom_models import TransformerModel, DenseModel
+    from ml_models import TransformerModel, DenseModel
 
     path_to_model = f'work_dir_tm_hyper/tm_selu1_0-1_64_8_6_32_1e-4_1e-5_under_0-8/best_TransformerModel.pth'
     #path_to_model = f'work_dir_hyper_other_nets/under_0-8/FNN/best_DenseModel.pth'

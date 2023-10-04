@@ -1,0 +1,10 @@
+electrode_name: SqMEA-8-200-60
+description: "Square MEA. 60 circle contacts in 8x8 matrix configuration with 200um pitch."
+sortlist: null
+pitch: 200
+dim: [6, 8, 8, 8, 8, 8, 8, 6]
+size: 15
+plane: yz
+shape: circle
+stagger: [0, -200, -200, -200, -200, -200, -200, 0]
+type: mea

@@ -1,0 +1,5 @@
+MEArec==1.9.2
+MEAutility==1.5.3
+neuron==8.2.7
+LFPy==2.3.6
+zarr==2.18.7

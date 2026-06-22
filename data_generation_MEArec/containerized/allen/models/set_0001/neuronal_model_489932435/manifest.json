@@ -1,0 +1,150 @@
+{
+  "biophys": [
+    {
+      "model_type": "Biophysical - perisomatic",
+      "model_file": [
+        "manifest.json",
+        "fit_parameters.json"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "sweeps_by_type": {
+        "Noise 2": [
+          47
+        ],
+        "Square - 2s Suprathreshold": [
+          63,
+          64,
+          62,
+          65,
+          66
+        ],
+        "Long Square": [
+          23,
+          24,
+          28,
+          25,
+          43,
+          29,
+          32,
+          33,
+          38,
+          41,
+          26
+        ],
+        "Short Square": [
+          14,
+          17,
+          8,
+          9,
+          15,
+          19,
+          12,
+          13,
+          16,
+          20,
+          10,
+          18
+        ],
+        "Noise 1": [
+          50
+        ],
+        "Ramp": [
+          5
+        ]
+      },
+      "sweeps": [
+        73,
+        47,
+        63,
+        64,
+        23,
+        62,
+        24,
+        28,
+        65,
+        25,
+        2,
+        14,
+        17,
+        8,
+        74,
+        66,
+        43,
+        9,
+        29,
+        72,
+        1,
+        15,
+        32,
+        19,
+        0,
+        33,
+        38,
+        12,
+        50,
+        13,
+        16,
+        20,
+        41,
+        3,
+        5,
+        26,
+        10,
+        18
+      ]
+    }
+  ],
+  "neuron": [
+    {
+      "hoc": [
+        "stdgui.hoc",
+        "import3d.hoc",
+        "cell.hoc"
+      ]
+    }
+  ],
+  "manifest": [
+    {
+      "type": "dir",
+      "spec": ".",
+      "key": "BASEDIR"
+    },
+    {
+      "type": "dir",
+      "spec": "work",
+      "key": "WORKDIR",
+      "parent": "BASEDIR"
+    },
+    {
+      "type": "file",
+      "spec": "reconstruction.swc",
+      "key": "MORPHOLOGY"
+    },
+    {
+      "type": "file",
+      "spec": "reconstruction.marker",
+      "key": "MARKER"
+    },
+    {
+      "type": "dir",
+      "spec": "modfiles",
+      "key": "MODFILE_DIR"
+    },
+    {
+      "type": "file",
+      "format": "NWB",
+      "spec": "488680209_ephys.nwb",
+      "key": "stimulus_path"
+    },
+    {
+      "parent_key": "WORKDIR",
+      "type": "file",
+      "format": "NWB",
+      "spec": "488680209_ephys.nwb",
+      "key": "output_path"
+    }
+  ]
+}
